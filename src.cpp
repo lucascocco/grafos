@@ -19,7 +19,3 @@ int main(){
 
     return 0;
 }
-// NEAAAAAAAAAHHHH
-// NEAAAAAAAAAHHHH
-ashdashdhasdh//  mudança
-// mudança
