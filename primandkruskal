@@ -1,0 +1,268 @@
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+#include <string>
+#include <list>
+#include <vector>
+
+using namespace std;
+
+struct arvore{
+	string aresta;
+	string v1;
+	string v2;
+	int peso;
+};
+
+struct tabela{
+	string vert;
+	int peso;
+	char fechado;
+	string caminho;
+};
+
+void leitura(list<arvore>&tree, list<tabela>&tabelaminima){
+	string aux;
+	int numero_vertice, numero_aresta;
+
+	ifstream myfile("INPUT_GRAPH");
+	if(!myfile){
+		cout << "ERROR!" << endl << endl;
+		return;
+	}
+
+	myfile >> numero_vertice;    		//Le a quantidade de vertices
+	tabela dados;
+	for(int i=0; i<numero_vertice; i++){
+		myfile >> dados.vert;
+		dados.peso = 0;
+		dados.fechado = 'N';
+		dados.caminho = '-';
+		tabelaminima.push_back(dados);
+	}
+
+	myfile >> numero_aresta;			//Le a quantidade de arestas
+	for (int i=0; i<numero_aresta; i++){
+		arvore nova;
+		myfile >> nova.aresta;
+		myfile >> nova.v1;
+		myfile >> nova.v2;
+		myfile >> nova.peso;
+		tree.push_back(nova);
+	}
+	myfile.close();
+}
+
+//PRIM --------
+
+list<tabela>::iterator consultavertice(string vertteste, list<tabela> &tabelaminima, list<tabela>::iterator begin1) {
+    for(auto z=tabelaminima.begin(); z!=tabelaminima.end(); z++) {
+        if(z->vert == vertteste)
+            return z;
+    }
+    return begin1;
+}
+
+list<tabela>::iterator retornaendereco(list<tabela> &tabelaminima, list<tabela>::iterator begin1) {
+    int result = 0;
+    auto endereco = tabelaminima.begin();
+    for(auto u=tabelaminima.begin(); u!=tabelaminima.end(); ++u) {
+        if(u->fechado != 'S' && u->peso < result && u->peso != 0 || u->fechado != 'S' && result == 0 && u->peso != 0) {
+            endereco = u;
+            result = u->peso;
+        }
+    }
+    if(endereco != begin1)
+        return endereco;
+    else {
+        return begin1;
+    }
+}
+
+void exibetabela(list<tabela> &tabelaminima) {
+    cout << "|VETOR  |PESO   |CAMINHO|FECHADO|" << endl;
+    for(auto at=tabelaminima.begin(); at!=tabelaminima.end(); ++at) {
+        cout << "|" << at->vert << "\t|" << at->peso << "\t|" << at->caminho << "\t|" << at->fechado << "\t|" << endl;
+    }
+    cout << endl;
+}
+
+void verificapeso(string vetatual, int peso,  string caminho, list<tabela> &tabelaminima) {
+    for(auto u=tabelaminima.begin(); u!=tabelaminima.end(); ++u) {
+        if(u->vert == vetatual) {
+            if((u->peso > peso || u->peso == 0) && u->fechado != 'S') {
+                u->peso = peso;
+                u->caminho = caminho;
+            }
+            break;
+        }
+    }
+}
+
+// ---------- PRIM
+
+//KRUSKAL ------------
+
+bool Compare(arvore a, arvore b){ //Funcao para ordenar as arestas
+    int x, y;
+    x = a.peso;
+    y = b.peso;
+
+    return x < y;
+}
+
+int busca(int pais[], int posicao){ //Busca o pai(subconjunto) que o vertice pertence
+    if(pais[posicao] == posicao){ //Se a posicao do vetor de pais for a mesma posicao do vert na lista
+        return posicao;
+    }
+    return pais[posicao] = busca(pais, pais[posicao]);
+}
+
+void juntar(int pais[], int vert1, int vert2){
+    int v1 = busca(pais, vert1); //Busca o pai(subconjunto) do Vert1
+    int v2 = busca(pais, vert2); //Busca o pai(subconjunto) do Vert2
+
+    pais[v1] = v2;
+}
+
+int posicao1(list<tabela> tabelaminima, string v1){ //Posicao do vertice V1 na lista
+    int posicao=0;
+
+    for(auto it=tabelaminima.begin();it!=tabelaminima.end();++it){
+        if(v1 == it->vert){
+            return posicao;
+        }
+        posicao++;
+    }
+    return -1;
+}
+
+int posicao2(list<tabela> tabelaminima, string v2){ //Posicao do vertice V2 na lista
+    int posicao=0;
+
+    for(auto it=tabelaminima.begin();it!=tabelaminima.end();it++){
+        if(v2 == it->vert){
+            return posicao;
+        }
+        posicao++;
+    }
+    return -1;
+}
+
+// ------- KRUSKAL
+
+void prim(list<arvore>&tree, list<tabela>&tabelaminima){
+
+	leitura(tree, tabelaminima);
+
+	auto inicio = tabelaminima.begin();
+	auto it = tabelaminima.begin();
+	string vertice;
+
+	while(true){
+		cout << "O algoritmo deve iniciar por qual vértice?" << endl;
+		cin >> vertice;
+		it = consultavertice(vertice, tabelaminima, inicio);
+		inicio = it;
+		if(inicio->vert == vertice)
+			break;
+		else
+			cout << "Digite um vértice valido!" << endl;
+	}
+
+	while(true){
+		for(auto j=tree.begin(); j!=tree.end(); j++){
+			if(j->v1 == it->vert)
+				verificapeso(j->v2, j->peso, it->vert, tabelaminima);
+			else if(j->v2 == it->vert)
+				verificapeso(j->v1, j->peso, it->vert, tabelaminima);
+		}
+
+		it->fechado = 'S';
+
+		exibetabela(tabelaminima);
+
+		it = retornaendereco(tabelaminima, inicio);
+		// cout << it->vert << endl;
+		if(it->fechado == 'S'){
+			int custoarvore = 0;
+			for(auto at=tabelaminima.begin(); at!=tabelaminima.end(); ++at)
+				custoarvore += at->peso;
+			cout << "O custo da tabela é: " << custoarvore << endl;
+			return;
+		}
+	}
+}
+
+void kruskal(list<arvore>&tree, list<tabela>&tabelaminima){
+
+	leitura(tree, tabelaminima);
+
+	int pais[tabelaminima.size()]; //subconjuntos
+
+    list<arvore> agm; //Arvore geradora minima
+
+    tree.sort(Compare); //Ordena as arestas por peso
+
+    for(int i=0; i<=tabelaminima.size(); i++){ //Inicia o vetor de pais (usado para busca, juntar)
+            pais[i] = i;
+    }
+
+    for(auto it=tree.begin(); it!=tree.end(); it++){
+        int vert1 = busca(pais, posicao1(tabelaminima, it->v1)); //Busca o subconjunto de cada arestra
+        int vert2 = busca(pais, posicao2(tabelaminima, it->v2));
+
+        if(vert1 != vert2){ //Se estiverem em subconjuntos diferentes
+            juntar(pais, vert1, vert2); //Junta no mesmo subconjunto
+            agm.push_back(*it); //Insere na agm
+        }
+    }
+
+    cout << "\nArvore Geradora Minima Kruskal: " << endl;
+
+    int pesototal = 0;
+
+    for(auto it=agm.begin();it!=agm.end();++it){//Mostra a Arvore Geradora Minima
+        pesototal+=it->peso;
+            cout << "ARESTA: " << it->aresta << "\tVERTICES: " << it->v1 << " | " << it->v2 << "\tPESO: " << it->peso << endl;
+        }
+    cout << "O custo da arvore eh: " << pesototal << endl << endl;
+}
+
+int main()
+{
+	list<arvore>tree;
+	list<tabela>tabelaminima;
+
+	char opcao;
+
+    cout << "Geovani Sordi - 141974@upf.br" << endl
+         << "Lucas de Mattos Cocco - 165715@upf.br" << endl
+         << "Tiago Luiz Bugone Seben - 165725@upf.br" << endl;
+
+         while(1){
+
+			 tree.clear();			//Limpa as listas
+			 tabelaminima.clear();
+
+			 cout << "P - PRIM" << endl
+				  << "K - KRUSKAL" << endl
+				  << "F - FIM" << endl;
+
+				  cin >> opcao;
+
+                  opcao = toupper(opcao);
+
+				  switch(opcao){
+					  case 'P':
+							prim(tree, tabelaminima);
+							break;
+
+					  case 'K':
+							kruskal(tree, tabelaminima);
+							break;
+
+					  case 'F': return 0;
+				  }
+		 }
+}
