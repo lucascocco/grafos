@@ -3,12 +3,15 @@
 
 using namespace std;
 
-struct vertice {
-
+struct aresta {
+    string id;
+    int value;
+    struct vertice
 };
 
-struct aresta {
-    int value;
+struct vertice {
+    string id;
+    list<struct aresta> aresta;
 };
 
 int main(){
@@ -16,3 +19,5 @@ int main(){
 
     return 0;
 }
+// NEAAAAAAAAAHHHH
+// NEAAAAAAAAAHHHH
